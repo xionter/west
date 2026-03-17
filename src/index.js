@@ -64,10 +64,12 @@ class Trasher extends Dog {
 
     modifyTakenDamage(value, fromCard, gameContext, continuation) {
         const reduced = Math.max(0, value - 1);
-
         this.view.signalAbility(() => {
             continuation(reduced);
         });
+    }
+    getDescriptions() {
+        return [...super.getDescriptions(), "Получает на 1 меньше урона"];
     }
 }
 
@@ -80,7 +82,6 @@ class Gatling extends Creature {
     attack(gameContext, continuation) {
         const taskQueue = new TaskQueue();
         const { oppositePlayer } = gameContext;
-
         taskQueue.push(onDone => this.view.showAttack(onDone));
         taskQueue.push(onDone => {
             const cards = oppositePlayer.table;
@@ -90,15 +91,12 @@ class Gatling extends Creature {
                 while (i < cards.length && !cards[i]) {
                     i++;
                 }
-
                 if (i >= cards.length) {
-                    onDone(); // ВАЖНО: один раз
+                    onDone();
                     return;
                 }
-
                 const card = cards[i++];
-
-                this.dealDamageToCreature(1, card, gameContext, next);
+                this.dealDamageToCreature(2, card, gameContext, next);
             };
 
             next();
@@ -114,10 +112,12 @@ const seriffStartDeck = [
     new Duck(),
     new Duck(),
     new Duck(),
-];
-
-const banditStartDeck = [
     new Gatling(),
+];
+const banditStartDeck = [
+    new Trasher(),
+    new Dog(),
+    new Dog(),
 ];
 
 const game = new Game(seriffStartDeck, banditStartDeck);
