@@ -6,6 +6,7 @@ import SpeedRate from './SpeedRate.js';
 class Creature extends Card {
     constructor(name, power, image) {
         super(name, power, image);
+        this._currentPower = this.maxPower;
     }
 
     getDescriptions() {
@@ -35,7 +36,7 @@ function getCreatureDescription(card) {
 
 
 class Duck extends Creature {
-    constructor(image) {
+    constructor(image='duck.png') {
         super('Мирная утка', 2, image);
     }
 
@@ -73,6 +74,80 @@ class Trasher extends Dog {
     }
 }
 
+class Rogue extends Creature {
+    constructor() {
+        super("Изгой", 2);
+    }
+    stealAbilities(target, gameContext) {
+        if (target instanceof Rogue) return;
+
+        const proto = Object.getPrototypeOf(target);
+
+        const abilityNames = [
+            'modifyDealedDamageToCreature',
+            'modifyDealedDamageToPlayer',
+            'modifyTakenDamage'
+        ];
+
+        abilityNames.forEach(name => {
+            if (proto.hasOwnProperty(name)) {
+                this[name] = proto[name].bind(this);
+                delete proto[name];
+            }
+        });
+
+        gameContext.updateView();
+    }
+
+    attack(gameContext, continuation) {
+        const { oppositePlayer } = gameContext;
+        const target = oppositePlayer.table.find(c => c);
+
+        if (target) {
+            this.stealAbilities(target, gameContext);
+        }
+
+        super.attack(gameContext, continuation);
+    }
+}
+
+
+class Brewer extends Duck {
+    constructor() {
+        super();
+        this.name = "Пивовар";
+        this.maxPower = 2;
+        this.currentPower = 2;
+        this.image = "brewer.png";
+    }
+
+    buff(card) {
+        card.maxPower += 1;
+        card.currentPower += 2;
+
+        card.view.signalHeal(() => {
+            card.updateView();
+        });
+    }
+
+    attack(gameContext, continuation) {
+        const { currentPlayer, oppositePlayer } = gameContext;
+
+        const allCards = currentPlayer.table.concat(oppositePlayer.table);
+
+        allCards.forEach(card => {
+            if (card && isDuck(card)) {
+                this.buff(card);
+            }
+        });
+
+        super.attack(gameContext, continuation);
+    }
+
+    getDescriptions() {
+        return [ ...super.getDescriptions(), "Баффает уток (+1 max, +2 current)"];
+    }
+}
 
 class Gatling extends Creature {
     constructor() {
@@ -109,15 +184,22 @@ class Gatling extends Creature {
 
 
 const seriffStartDeck = [
+    new Brewer(),
     new Duck(),
     new Duck(),
     new Duck(),
-    new Gatling(),
+    new Duck(),
+    new Duck(),
+    new Duck()
 ];
 const banditStartDeck = [
-    new Trasher(),
-    new Dog(),
-    new Dog(),
+    new Brewer(),
+    new Duck(),
+    new Duck(),
+    new Duck(),
+    new Duck(),
+    new Duck(),
+    new Duck()
 ];
 
 const game = new Game(seriffStartDeck, banditStartDeck);
