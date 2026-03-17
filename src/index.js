@@ -55,6 +55,66 @@ class Dog extends Creature {
     }
 }
 
+class Lad extends Dog {
+    constructor() {
+        super();
+        this.name = "Браток";
+        this.maxPower = 2;
+        this.currentPower = 2;
+    }
+
+    static getInGameCount() {
+        return this.inGameCount || 0;
+    }
+
+    static setInGameCount(value) {
+        this.inGameCount = value;
+    }
+
+    static getBonus() {
+        const n = this.getInGameCount();
+        return (n * (n + 1)) / 2;
+    }
+
+    doAfterComingIntoPlay(gameContext, continuation) {
+        Lad.setInGameCount(Lad.getInGameCount() + 1);
+        continuation();
+    }
+
+    doBeforeRemoving(continuation) {
+        Lad.setInGameCount(Lad.getInGameCount() - 1);
+        continuation();
+    }
+
+    modifyDealedDamageToCreature(value, toCard, gameContext, continuation) {
+        const bonus = Lad.getBonus();
+
+        this.view.signalAbility(() => {
+            continuation(value + bonus);
+        });
+    }
+
+    modifyTakenDamage(value, fromCard, gameContext, continuation) {
+        const bonus = Lad.getBonus();
+
+        this.view.signalAbility(() => {
+            continuation(Math.max(0, value - bonus));
+        });
+    }
+
+    getDescriptions() {
+        const desc = [...super.getDescriptions()];
+
+        if (
+            Lad.prototype.hasOwnProperty('modifyDealedDamageToCreature') ||
+            Lad.prototype.hasOwnProperty('modifyTakenDamage')
+        ) {
+            desc.push("Чем их больше, тем они сильнее");
+        }
+
+        return desc;
+    }
+}
 
 class Trasher extends Dog {
     constructor() {
@@ -185,7 +245,7 @@ class Gatling extends Creature {
 
 const seriffStartDeck = [
     new Brewer(),
-    new Duck(),
+    new Trasher(),
     new Duck(),
     new Duck(),
     new Duck(),
@@ -193,9 +253,9 @@ const seriffStartDeck = [
     new Duck()
 ];
 const banditStartDeck = [
-    new Brewer(),
-    new Duck(),
-    new Duck(),
+    new Lad(),
+    new Dog(),
+    new Rogue(),
     new Duck(),
     new Duck(),
     new Duck(),
@@ -209,7 +269,3 @@ SpeedRate.set(1);
 game.play(false, (winner) => {
     alert('Победил ' + winner.name);
 });
-
-let dog = new Dog();
-let duck = new Duck();
-
