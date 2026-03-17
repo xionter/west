@@ -72,8 +72,6 @@ class Trasher extends Dog {
 }
 
 
-// --- NEW: Gatling ---
-
 class Gatling extends Creature {
     constructor() {
         super("Гатлинг", 6);
@@ -83,10 +81,7 @@ class Gatling extends Creature {
         const taskQueue = new TaskQueue();
         const { oppositePlayer } = gameContext;
 
-        // анимация атаки
         taskQueue.push(onDone => this.view.showAttack(onDone));
-
-        // безопасная последовательная атака
         taskQueue.push(onDone => {
             const cards = oppositePlayer.table;
             let i = 0;
@@ -103,7 +98,6 @@ class Gatling extends Creature {
 
                 const card = cards[i++];
 
-                // строго 2 урона и строго по очереди
                 this.dealDamageToCreature(1, card, gameContext, next);
             };
 
@@ -126,9 +120,6 @@ const banditStartDeck = [
     new Gatling(),
 ];
 
-
-// --- game ---
-
 const game = new Game(seriffStartDeck, banditStartDeck);
 
 SpeedRate.set(1);
@@ -137,11 +128,6 @@ game.play(false, (winner) => {
     alert('Победил ' + winner.name);
 });
 
-
-// --- debug ---
-
 let dog = new Dog();
 let duck = new Duck();
 
-alert(getCreatureDescription(dog));
-alert(getCreatureDescription(duck));
